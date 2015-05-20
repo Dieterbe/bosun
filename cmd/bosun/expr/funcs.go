@@ -11,6 +11,7 @@ import (
 
 	"bosun.org/_third_party/github.com/GaryBoone/GoStats/stats"
 	"bosun.org/_third_party/github.com/MiniProfiler/go/miniprofiler"
+	"bosun.org/btime"
 	"bosun.org/cmd/bosun/expr/parse"
 	"bosun.org/graphite"
 	"bosun.org/opentsdb"
@@ -611,19 +612,17 @@ func Band(e *State, T miniprofiler.Timer, query, duration, period string, num fl
 }
 
 func GraphiteQuery(e *State, T miniprofiler.Timer, query string, sduration, eduration, format string) (r *Results, err error) {
-	sd, err := opentsdb.ParseDuration(sduration)
+	st, err := btime.Get(e.now, sduration)
 	if err != nil {
 		return
 	}
-	ed := opentsdb.Duration(0)
+	et := e.now
 	if eduration != "" {
-		ed, err = opentsdb.ParseDuration(eduration)
+		et, err = btime.Get(e.now, eduration)
 		if err != nil {
 			return
 		}
 	}
-	st := e.now.Add(-time.Duration(sd))
-	et := e.now.Add(-time.Duration(ed))
 	req := &graphite.Request{
 		Targets: []string{query},
 		Start:   &st,
